@@ -3,6 +3,7 @@ DEVICE_DATA = {
     "supportedModels": [
         "RG10A(D2S)/BGEFU1",
     ],
+    "defaultController": "Broadlink",
     "commandsEncoding": "Generic",
     "minTemperature": {
         "cool": 60,
@@ -23,40 +24,62 @@ DEVICE_DATA = {
         "auto",
         "dry",
     ],
-    "fanModes": {
+    "fanModes": [
         "auto",
         "low",
-        "low_medium" "medium",
+        "low_medium",
+        "medium",
         "medium_high",
         "high",
-    },
-    "swingModes": {
+    ],
+    "swingModes": [
         "on",
         "top",
         "upper",
         "middle",
         "lower",
         "bottom",
-    },
-    "toggles": {
-        "turbo_mode",
-        "self_cleaning",
-    },
+    ],
+    "actions": [
+        "turbo_mode_on",
+        "turbo_mode_off",
+        "toggle_display",
+        "start_self_cleaning",
+    ],
 }
 
 
-def command(hvac_mode, swing_mode, fan_mode, temp, turbo_mode=False, cleaning_enabled=False):
-    # 1. Handle OFF Command (Short distinct packet: 4d,de,07)
+def short_command(pkt):
+    return (
+        "nec",
+        "tp=533,t0=517,t1=1568,ph=4367,pl=4272,cm=3,a=2,pg=5097",
+        [
+            pkt,
+            pkt,
+        ],
+    )
+
+
+def command(hvac_mode, swing_mode, fan_mode, temp, action=None):
     if hvac_mode == "off":
-        offPkt = [0x4D, 0xDE, 0x07]
-        return (
-            "nec",
-            "tp=528,t0=519,t1=1571,ph=4272,pl=4303,cm=3,a=2,pg=5096",
-            [
-                offPkt,
-                offPkt,
-            ],
-        )
+        return short_command([0x4D, 0xDE, 0x07])
+
+    # Actions are only allowed while on
+    if action is not None and hvac_mode == "off":
+        action = None
+
+    if action is not None:
+        match action:
+            case "turbo_mode_on":
+                return short_command([0x9D, 0xAF, 0x80])
+            case "turbo_mode_off":
+                return short_command([0x9D, 0xAF, 0x40])
+            case "toggle_display":
+                return short_command([0x9D, 0xAF, 0x90])
+            case "start_self_cleaning":
+                return short_command([0x9D, 0xAF, 0xF2])
+            case _:
+                raise ValueError(f"Unknown action: {action}")
 
     # 2. Mode Constraints
     # Auto and Dry force Fan to Auto
@@ -234,7 +257,7 @@ def command(hvac_mode, swing_mode, fan_mode, temp, turbo_mode=False, cleaning_en
     # Remote sequence is P1, P1, P2
     return (
         "nec",
-        "tp=528,t0=519,t1=1571,ph=4272,pl=4303,cm=3,a=2,pg=5096",
+        "tp=534,t0=518,t1=1567,ph=4356,pl=4283,pg=5081",
         [
             packet1,
             packet1,
