@@ -1,6 +1,6 @@
 DEVICE_DATA = {
     "manufacturer": "Perfect Aire",
-    "supported_models": [
+    "supportedModels": [
         "RG10A(D2S)/BGEFU1",
     ],
     "commandsEncoding": "Generic",
