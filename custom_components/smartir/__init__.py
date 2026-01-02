@@ -23,11 +23,11 @@ DOMAIN = 'smartir'
 VERSION = '1.18.1'
 MANIFEST_URL = (
     "https://raw.githubusercontent.com/"
-    "smartHomeHub/SmartIR/{}/"
+    "capnspacehook/SmartIR/{}/"
     "custom_components/smartir/manifest.json")
 REMOTE_BASE_URL = (
     "https://raw.githubusercontent.com/"
-    "smartHomeHub/SmartIR/{}/"
+    "capnspacehook/SmartIR/{}/"
     "custom_components/smartir/")
 COMPONENT_ABS_DIR = os.path.dirname(
     os.path.abspath(__file__))
@@ -56,26 +56,28 @@ async def async_get_device_data(platform, config):
 
     if len(str(device_code)) > 4:
         device_filename = str(device_code) + '.py'
+        file_type = 'Python'
         is_python = True
     else:
         device_filename = str(device_code) + '.json'
+        file_type = 'JSON'
         is_python = False
 
     device_path = os.path.join(device_files_absdir, device_filename)
 
     if not os.path.exists(device_path):
         _LOGGER.warning(device_path)
-        _LOGGER.warning("Couldn't find the device Json file. The component will " \
+        _LOGGER.warning(f"Couldn't find the device {file_type} file. The component will " \
                         "try to download it from the GitHub repo.")
 
         try:
             codes_source = ("https://raw.githubusercontent.com/"
-                            "smartHomeHub/SmartIR/master/"
+                            "capnspacehook/SmartIR/master/"
                             f"codes/{platform}/{device_filename}")
 
             await Helper.downloader(codes_source, device_path)
         except Exception:
-            _LOGGER.error("There was an error while downloading the device Json file. " \
+            _LOGGER.error(f"There was an error while downloading the device {file_type} file. " \
                           "Please check your internet connection or if the device code " \
                           "exists on GitHub. If the problem still exists please " \
                           "place the file manually in the proper directory.")
